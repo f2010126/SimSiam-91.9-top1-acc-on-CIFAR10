@@ -17,8 +17,8 @@ from simsiam.criterion import SimSiamLoss
 from simsiam.validation import KNNValidation
 
 parser = argparse.ArgumentParser('arguments for training')
-parser.add_argument('--data_root', type=str, help='path to dataset directory')
-parser.add_argument('--exp_dir', type=str, help='path to experiment directory')
+parser.add_argument('--data_root', type=str, default= 'data', help='path to dataset directory')
+parser.add_argument('--exp_dir', type=str, default='experiments', help='path to experiment directory')
 parser.add_argument('--trial', type=str, default='1', help='trial id')
 parser.add_argument('--img_dim', default=32, type=int)
 
