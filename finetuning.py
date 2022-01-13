@@ -48,6 +48,10 @@ best_acc1 = 0
 
 def main(args, trial_dir=None, bohb_infos=None):
 
+    if bohb_infos is not None:
+        args.pretrained = trial_dir + "/" + args.trial + "_best.pth"
+    else:
+        args.pretrained = args.pretrained + "_best.pth"
 
     if not path.exists(args.exp_dir):
         makedirs(args.exp_dir)

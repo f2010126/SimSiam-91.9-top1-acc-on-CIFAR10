@@ -14,9 +14,9 @@ class HPOWorker(Worker):
     def compute(self, config_id, config, budget, working_directory, *args, **kwargs):
         bohb_infos = {'bohb_config_id': config_id, 'bohb_config': config, 'bohb_budget': budget}
         # RUN PRETRAINING
-        pt_main(self.args, trial_dir=self.trial_dir, bohb_infos=bohb_infos)
+        trial_dir = pt_main(self.args, trial_dir=self.trial_dir, bohb_infos=bohb_infos)
         # RUN FINETUNING + GET VALIDATION METRIC
-        val_metric = ft_main(self.args, trial_dir=self.trial_dir, bohb_infos=bohb_infos)
+        val_metric = ft_main(self.args, trial_dir=trial_dir, bohb_infos=bohb_infos)
         return {
             "loss": -1 * val_metric,
             "info": {"test/metric": 0},

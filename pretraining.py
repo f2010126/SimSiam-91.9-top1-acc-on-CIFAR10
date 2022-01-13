@@ -66,10 +66,7 @@ def main(args, trial_dir=None, bohb_infos=None):
     if not path.exists(args.exp_dir):
         makedirs(args.exp_dir)
 
-    if bohb_infos is not None:
-        trial_dir = path.join(args.exp_dir, args.trial)
-    else:
-        trial_dir = args.exp_dir
+    trial_dir = path.join(args.exp_dir, args.trial)
     logger = SummaryWriter(trial_dir)
     print(f"Tensorboard logs kept in {logger.log_dir}")
     print(vars(args))
@@ -206,6 +203,8 @@ def main(args, trial_dir=None, bohb_infos=None):
     save_checkpoint(args, epoch, model, optimizer, best_acc,
                     path.join(trial_dir, '{}_last.pth'.format(args.trial)),
                     'Saving the model at the last epoch.')
+    if bohb_infos is not None:
+        return trial_dir
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
