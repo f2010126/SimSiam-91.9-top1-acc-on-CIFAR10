@@ -1,4 +1,5 @@
 import argparse
+import os
 import time
 import math
 import random
@@ -13,42 +14,16 @@ from torchvision import datasets
 from torchvision import transforms
 import torch.backends.cudnn as cudnn
 
+from simsiam.get_sampler import get_train_valid_sampler
 from simsiam.loader import TwoCropsTransform
 from simsiam.model_factory import SimSiam
 from simsiam.criterion import SimSiamLoss
 from simsiam.validation import KNNValidation
 
-parser = argparse.ArgumentParser('arguments for training')
-parser.add_argument('--data_root', type=str, default='data', help='path to dataset directory')
-parser.add_argument('--exp_dir', type=str, default='experiments', help='path to experiment directory')
-parser.add_argument('--trial', type=str, default='1', help='trial id')
-parser.add_argument('--img_dim', default=32, type=int)
-
-parser.add_argument('--arch', default='resnet18', help='model name is used for training')
-
-parser.add_argument('--feat_dim', default=2048, type=int, help='feature dimension')
-parser.add_argument('--num_proj_layers', type=int, default=2, help='number of projection layer')
-parser.add_argument('--batch_size', type=int, default=512, help='batch_size')
-parser.add_argument('--num_workers', type=int, default=8, help='num of workers to use')
-parser.add_argument('--epochs', type=int, default=800, help='number of training epochs')
-parser.add_argument('--gpu', default=None, type=int, help='GPU id to use.')
-parser.add_argument('--loss_version', default='simplified', type=str,
-                    choices=['simplified', 'original'],
-                    help='do the same thing but simplified version is much faster. ()')
-parser.add_argument('--print_freq', default=10, type=int, help='print frequency')
-parser.add_argument('--eval_freq', default=5, type=int, help='evaluate model frequency')
-parser.add_argument('--save_freq', default=50, type=int, help='save model frequency')
-parser.add_argument('--resume', default=None, type=str, help='path to latest checkpoint')
-
-parser.add_argument('--learning_rate', type=float, default=0.05, help='learning rate')
-parser.add_argument('--weight_decay', type=float, default=5e-4, help='weight decay')
-parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
-parser.add_argument('--seed', default=123, type=int, metavar='N', help='random seed of numpy and torch')
-
-args = parser.parse_args()
 
 
-def main():
+
+def main(args, trial_dir=None, bohb_infos=None):
     # adding seed
     if args.seed is not None:
         random.seed(args.seed)
@@ -62,6 +37,15 @@ def main():
             'from checkpoints.'
         )
 
+    if args.gpu is not None:
+        warnings.warn('You have chosen a specific GPU. This will completely '
+                      'disable data parallelism.')
+
+    if args.dist_url == "env://" and args.world_size == -1:
+        args.world_size = int(os.environ["WORLD_SIZE"])
+
+    args.distributed = args.world_size > 1 or args.multiprocessing_distributed
+
     if not path.exists(args.exp_dir):
         makedirs(args.exp_dir)
 
@@ -74,7 +58,7 @@ def main():
         transforms.RandomResizedCrop(args.img_dim, scale=(0.2, 1.)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomApply([
-            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened  # TODO: parameterize
         ], p=0.8),
         transforms.RandomGrayscale(p=0.2),
         transforms.ToTensor(),
@@ -85,10 +69,11 @@ def main():
                                  train=True,
                                  download=True,
                                  transform=TwoCropsTransform(train_transforms))
-
+    train_sampler, _ = get_train_valid_sampler(args, train_set)
     train_loader = DataLoader(dataset=train_set,
-                              batch_size=args.batch_size,
-                              shuffle=True,
+                              batch_size=args.pt_batch_size,
+                              shuffle=(train_sampler is None),
+                              sampler=train_sampler,
                               num_workers=args.num_workers,
                               pin_memory=True,
                               drop_last=True)
@@ -96,9 +81,9 @@ def main():
     model = SimSiam(args)
 
     optimizer = optim.SGD(model.parameters(),
-                          lr=args.learning_rate,
-                          momentum=args.momentum,
-                          weight_decay=args.weight_decay)
+                          lr=args.pt_learning_rate,
+                          momentum=args.pt_momentum,
+                          weight_decay=args.pt_weight_decay)
 
     criterion = SimSiamLoss(args.loss_version)
 
@@ -109,18 +94,18 @@ def main():
         cudnn.benchmark = True
 
     start_epoch = 1
-    if args.resume is not None:
-        if path.isfile(args.resume):
-            start_epoch, model, optimizer = load_checkpoint(model, optimizer, args.resume)
+    if args.pt_resume is not None:
+        if path.isfile(args.pt_resume):
+            start_epoch, model, optimizer = load_checkpoint(model, optimizer, args.pt_resume)
             print("Loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume, start_epoch))
+                  .format(args.pt_resume, start_epoch))
         else:
-            print("No checkpoint found at '{}'".format(args.resume))
+            print("No checkpoint found at '{}'".format(args.pt_resume))
 
     # routine
     best_acc = 0.0
     validation = KNNValidation(args, model.encoder)
-    for epoch in range(start_epoch, args.epochs + 1):
+    for epoch in range(start_epoch, args.pt_epochs + 1):
 
         adjust_learning_rate(optimizer, epoch, args)
         print("Training...")
@@ -138,21 +123,21 @@ def main():
             if val_top1_acc > best_acc:
                 best_acc = val_top1_acc
 
-                save_checkpoint(epoch, model, optimizer, best_acc,
+                save_checkpoint(args, epoch, model, optimizer, best_acc,
                                 path.join(trial_dir, '{}_best.pth'.format(args.trial)),
                                 'Saving the best model!')
             logger.add_scalar('Acc/val_top1', val_top1_acc, epoch)
 
         # save the model
         if epoch % args.save_freq == 0:
-            save_checkpoint(epoch, model, optimizer, val_top1_acc,
+            save_checkpoint(args, epoch, model, optimizer, val_top1_acc,
                             path.join(trial_dir, 'ckpt_epoch_{}_{}.pth'.format(epoch, args.trial)),
                             'Saving...')
 
     print('Best accuracy:', best_acc)
 
     # save final model
-    save_checkpoint(epoch, model, optimizer, best_acc,
+    save_checkpoint(args, epoch, model, optimizer, best_acc,
                     path.join(trial_dir, '{}_last.pth'.format(args.trial)),
                     'Saving the model at the last epoch.')
 
@@ -197,9 +182,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
 def adjust_learning_rate(optimizer, epoch, args):
     """Decay the learning rate based on schedule"""
-    lr = args.learning_rate
+    lr = args.pt_learning_rate
     # cosine lr schedule
-    lr *= 0.5 * (1. + math.cos(math.pi * epoch / args.epochs))
+    lr *= 0.5 * (1. + math.cos(math.pi * epoch / args.pt_epochs))
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
@@ -251,7 +236,7 @@ class ProgressMeter(object):
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
 
-def save_checkpoint(epoch, model, optimizer, acc, filename, msg):
+def save_checkpoint(args, epoch, model, optimizer, acc, filename, msg):
     state = {
         'epoch': epoch,
         'arch': args.arch,
