@@ -64,7 +64,7 @@ def main(args, trial_dir=None, bohb_infos=None):
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
-        cudnn.deterministic = True
+        # cudnn.deterministic = True
         warnings.warn('You have chosen to seed training. '
                       'This will turn on the CUDNN deterministic setting, '
                       'which can slow down your training considerably! '
