@@ -3,6 +3,7 @@
 import argparse
 import builtins
 import os
+from os import path, makedirs
 import random
 import shutil
 import time
@@ -20,6 +21,7 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from torch.utils.tensorboard import SummaryWriter
 
 from simsiam.resnet_cifar import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 from PIL import Image
@@ -76,6 +78,7 @@ parser.add_argument('--dist-backend', default='nccl', type=str,
 parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
 parser.add_argument('--trial', type=str, default='1', help='trial id')
+parser.add_argument('--exp_dir', type=str, default='experiments', help='path to experiment directory')
 parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
 parser.add_argument('--multiprocessing-distributed', action='store_true',
@@ -138,13 +141,13 @@ def main():
         args.world_size = ngpus_per_node * args.world_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
+        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, logger),)
     else:
         # Simply call main_worker function
-        main_worker(args.gpu, ngpus_per_node, args)
+        main_worker(args.gpu, ngpus_per_node, args, logger=logger)
 
 
-def main_worker(gpu, ngpus_per_node, args):
+def main_worker(gpu, ngpus_per_node, args, logger=None):
     global best_acc1
     args.gpu = gpu
 
@@ -311,8 +314,7 @@ def main_worker(gpu, ngpus_per_node, args):
         adjust_learning_rate(optimizer, epoch, args)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, args)
-        logger.add_scalar('FineTune_Loss/train', train_loss, epoch)
+        train(train_loader, model, criterion, optimizer, epoch, args, logger=logger)
 
         # evaluate on validation set
         acc1 = validate(val_loader, model, criterion, args)
@@ -338,7 +340,7 @@ def main_worker(gpu, ngpus_per_node, args):
     logger.close()
 
 
-def train(train_loader, model, criterion, optimizer, epoch, args):
+def train(train_loader, model, criterion, optimizer, epoch, args, logger=None):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -388,6 +390,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         if i % args.print_freq == 0:
             progress.display(i)
+        logger.add_scalar('FineTune_Loss/train', loss.item(), epoch)
 
 
 def validate(val_loader, model, criterion, args):
