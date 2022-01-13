@@ -1,8 +1,14 @@
+# Experiments
+experiments/*
+
 # Datasets
 data/*
 
 # Submission scripts
 cluster/.*
+
+# Pycharm
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

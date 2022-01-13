@@ -4,6 +4,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision import datasets
 from torch import nn
+import numpy as np
+from simsiam.get_sampler import get_train_valid_sampler
 
 
 class KNNValidation(object):
@@ -22,25 +24,39 @@ class KNNValidation(object):
                                          train=True,
                                          download=True,
                                          transform=base_transforms)
-
+        train_sampler, valid_sampler = get_train_valid_sampler(args, train_dataset)
         self.train_dataloader = DataLoader(train_dataset,
-                                           batch_size=args.batch_size,
+                                           batch_size=args.pt_batch_size,
                                            shuffle=False,
+                                           sampler=train_sampler,
                                            num_workers=args.num_workers,
                                            pin_memory=True,
                                            drop_last=True)
+        if np.isclose(args.valid_size, 0.0):
+            test_dataset = datasets.CIFAR10(root=args.data_root,
+                                           train=False,
+                                           download=True,
+                                           transform=base_transforms)
 
-        val_dataset = datasets.CIFAR10(root=args.data_root,
-                                       train=False,
-                                       download=True,
-                                       transform=base_transforms)
+            self.eval_dataloader = DataLoader(test_dataset,
+                                             batch_size=args.pt_batch_size,
+                                             shuffle=False,
+                                             num_workers=args.num_workers,
+                                             pin_memory=True,
+                                             drop_last=True)
+        else:
+            valid_dataset = datasets.CIFAR10(root=args.data_root,
+                                            train=True,
+                                            download=True,
+                                            transform=base_transforms)
 
-        self.val_dataloader = DataLoader(val_dataset,
-                                         batch_size=args.batch_size,
-                                         shuffle=False,
-                                         num_workers=args.num_workers,
-                                         pin_memory=True,
-                                         drop_last=True)
+            self.eval_dataloader = DataLoader(valid_dataset,
+                                               batch_size=args.pt_batch_size,
+                                               shuffle=False,
+                                               sampler=valid_sampler,
+                                               num_workers=args.num_workers,
+                                               pin_memory=True,
+                                               drop_last=True)
 
     def _topk_retrieval(self):
         """Extract features from validation split and search on train split features."""
@@ -67,7 +83,7 @@ class KNNValidation(object):
         total = 0
         correct = 0
         with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(self.val_dataloader):
+            for batch_idx, (inputs, targets) in enumerate(self.eval_dataloader):
                 targets = targets.cuda(non_blocking=True)
                 batch_size = inputs.size(0)
                 features = self.model(inputs.to(self.device))
