@@ -36,6 +36,23 @@ def main(args, trial_dir=None, bohb_infos=None):
             'You may see unexpected behavior when restarting '
             'from checkpoints.'
         )
+    # BOHB only --------------------------------------------------------------------------------------------------------
+    if bohb_infos is not None:
+        # Integrate budget based on budget_mode
+        if args.budget_mode == "epochs":
+            args.pt_epochs = int(bohb_infos['bohb_budget'])
+        else:
+            raise ValueError(f"Budget mode '{args.budget_mode}' not implemented yet!")
+
+        # Add --bohb.configspace_mode to bohb_infos
+        bohb_infos['bohb_configspace'] = args.configspace_mode
+
+        # Create subfoler for each config_id (directory where tensorboard and checkpoints are being saved)
+        exp_dir_id = get_exp_dir_with_bohb_config_id(trial_dir, bohb_infos['bohb_config_id'])
+        args.exp_dir = exp_dir_id
+
+        print(f"\n\n\n\n\n\n{bohb_infos=}\n\n\n\n\n\n")
+    # ------------------------------------------------------------------------------------------------------------------
 
     if args.gpu is not None:
         warnings.warn('You have chosen a specific GPU. This will completely '
@@ -49,18 +66,67 @@ def main(args, trial_dir=None, bohb_infos=None):
     if not path.exists(args.exp_dir):
         makedirs(args.exp_dir)
 
-    trial_dir = path.join(args.exp_dir, args.trial)
+    if bohb_infos is not None:
+        trial_dir = path.join(args.exp_dir, args.trial)
+    else:
+        trial_dir = args.exp_dir
     logger = SummaryWriter(trial_dir)
     print(f"Tensorboard logs kept in {logger.log_dir}")
     print(vars(args))
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # Specify data augmentation hyperparameters for the pretraining part
+    # ------------------------------------------------------------------------------------------------------------------
+    # TODO: @Diane - put that into a separate function
+    # TODO: @Diane - Add gaussian blur for ImageNet
+    # Defaults
+    p_colorjitter = 0.8
+    p_grayscale = 0.2
+    # p_gaussianblur = 0.5 if dataset_name == 'ImageNet' else 0
+    brightness_strength = 0.4
+    contrast_strength = 0.4
+    saturation_strength = 0.4
+    hue_strength = 0.1
+    if args.use_fix_aug_params:
+        # You can overwrite parameters here if you want to try out a specific setting.
+        # Due to the flag, default experiments won't be affected by this.
+        p_colorjitter = 0.8
+        p_grayscale = 0.2
+        # p_gaussianblur = 0.5 if dataset_name == 'ImageNet' else 0
+        brightness_strength = 1.1592547258007664
+        contrast_strength = 1.160211615089221
+        saturation_strength = 0.9843846879329252
+        hue_strength = 0.19030216963226004
+
+    # BOHB - probability augment configspace
+    if bohb_infos is not None and bohb_infos['bohb_configspace'].endswith('probability_simsiam_augment'):
+        p_colorjitter = bohb_infos['bohb_config']['p_colorjitter']
+        p_grayscale = bohb_infos['bohb_config']['p_grayscale']
+        # p_gaussianblur = bohb_infos['bohb_config']['p_gaussianblur'] if dataset_name == 'ImageNet' else 0
+
+    # BOHB - color jitter strengths configspace
+    if bohb_infos is not None and bohb_infos['bohb_configspace'] == 'color_jitter_strengths':
+        brightness_strength = bohb_infos['bohb_config']['brightness_strength']
+        contrast_strength = bohb_infos['bohb_config']['contrast_strength']
+        saturation_strength = bohb_infos['bohb_config']['saturation_strength']
+        hue_strength = bohb_infos['bohb_config']['hue_strength']
+
+    # For testing
+    print(f"{p_colorjitter=}")
+    print(f"{p_grayscale=}")
+    # print(f"{p_gaussianblur=}")
+    print(f"{brightness_strength=}")
+    print(f"{contrast_strength=}")
+    print(f"{saturation_strength=}")
+    print(f"{hue_strength=}")
+    # ------------------------------------------------------------------------------------------------------------------
     train_transforms = transforms.Compose([
         transforms.RandomResizedCrop(args.img_dim, scale=(0.2, 1.)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomApply([
-            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened  # TODO: parameterize
-        ], p=0.8),
-        transforms.RandomGrayscale(p=0.2),
+            transforms.ColorJitter(brightness=brightness_strength, contrast=contrast_strength, saturation=saturation_strength, hue=hue_strength)  # not strengthened
+        ], p=p_colorjitter),
+        transforms.RandomGrayscale(p=p_grayscale),
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
@@ -255,6 +321,12 @@ def load_checkpoint(model, optimizer, filename):
     optimizer.load_state_dict(checkpoint['optimizer'])
 
     return start_epoch, model, optimizer
+
+
+def get_exp_dir_with_bohb_config_id(expt_dir, bohb_config_id):
+    config_id_path = "-".join(str(sub_id) for sub_id in bohb_config_id)
+    expt_dir_id = os.path.join(expt_dir, config_id_path)
+    return expt_dir_id
 
 
 if __name__ == '__main__':

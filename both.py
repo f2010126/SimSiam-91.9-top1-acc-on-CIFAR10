@@ -56,8 +56,8 @@ if __name__ == '__main__':
     parser.add_argument('--is_bohb_run', action='store_true', help='Set this flag if you want the experiment to be a BOHB run.')
     parser.add_argument("--run_id", default="default_BOHB")
     parser.add_argument("--n_iterations", type=int, default=10, help="How many BOHB iterations")
-    parser.add_argument("--min_budget", type=int, default=2)
-    parser.add_argument("--max_budget", type=int, default=4)
+    parser.add_argument("--min_budget", type=int, default=1)
+    parser.add_argument("--max_budget", type=int, default=1)
     parser.add_argument("--budget_mode", type=str, default="epochs", choices=["epochs", "data"], help="Choose your desired fidelity")
     parser.add_argument("--eta", type=int, default=2)
     parser.add_argument("--configspace_mode", type=str, default='color_jitter_strengths', choices=["imagenet_probability_simsiam_augment", "cifar10_probability_simsiam_augment", "color_jitter_strengths", "rand_augment", "probability_augment", "double_probability_augment"], help='Define which configspace to use.')
@@ -69,6 +69,7 @@ if __name__ == '__main__':
     parser.add_argument("--shutdown_workers", action='store_true', help='If using this flag, workers are not being shutdown after registering results.')
     parser.add_argument("--run_background_worker", action='store_true',help='If using this flag, the master runs a worker in the background.')
     parser.add_argument("--valid_size", default=0.0, type=float, help='If valid_size > 0, pick some images from the trainset to do evaluation on. If valid_size=0 evaluation is done on the testset.')
+    parser.add_argument('--use_fix_aug_params', action='store_true', help='Use this flag if you want to try out specific aug params (e.g., from a best BOHB config). Default values will be overwritten then without crashing other experiments.')
     args = parser.parse_args()
 
     if args.is_bohb_run:
