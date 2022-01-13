@@ -19,6 +19,6 @@ cd MetaSSL/SimSiam-91.9-top1-acc-on-CIFAR10
 
 echo "FineTune Simsiam with CIFAR10 LR =0.06"
 
-python -m main_lincls --trial '800_run_same_param' --arch resnet18 --num_cls 10 --batch_size 256 --lr 30.0 --weight_decay 0.0 --pretrained /work/dlclarge1/dsengupt-lth_ws/MetaSSL/SimSiam-91.9-top1-acc-on-CIFAR10/experiments/800_run_same_param/800_run_same_param_best.pth "./data"
+python -m main_lincls --trial '800_run_same_param' --seed 123 --arch resnet18 --num_cls 10 --batch_size 256 --lr 30.0 --weight_decay 0.0 --pretrained /work/dlclarge1/dsengupt-lth_ws/MetaSSL/SimSiam-91.9-top1-acc-on-CIFAR10/experiments/800_run_same_param/800_run_same_param_best.pth "./data"
 
 deactivate

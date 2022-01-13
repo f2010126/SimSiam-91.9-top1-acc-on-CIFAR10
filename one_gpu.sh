@@ -17,5 +17,5 @@ python3 -c "import torch; print(torch.__version__)"
 python3 -c "import torch; print(torch.cuda.is_available())"
 cd MetaSSL/SimSiam-91.9-top1-acc-on-CIFAR10
 echo "Pretrain Simsiam with CIFAR10 LR =0.06"
-python3 -m main --arch resnet18 --learning_rate 0.06 --epochs 800 --weight_decay 5e-4 --momentum 0.9 --batch_size 512 --gpu 0 --trial '800_run_same_param'
+python3 -m main --seed 123 --arch resnet18 --learning_rate 0.06 --epochs 800 --weight_decay 5e-4 --momentum 0.9 --batch_size 512 --gpu 0 --trial '800_run_same_param'
 deactivate
