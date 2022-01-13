@@ -26,10 +26,9 @@ from torch.utils.tensorboard import SummaryWriter
 from simsiam.resnet_cifar import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 from PIL import Image
 
-
 model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+                     if name.islower() and not name.startswith("__")
+                     and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
@@ -37,8 +36,8 @@ parser.add_argument('data', metavar='DIR',
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
                     help='model architecture: ' +
-                        ' | '.join(model_names) +
-                        ' (default: resnet50)')
+                         ' | '.join(model_names) +
+                         ' (default: resnet50)')
 parser.add_argument('--num_cls', default=10, type=int, metavar='N',
                     help='number of classes in dataset (output dimention of models)')
 parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
@@ -112,7 +111,6 @@ def main():
     trial_dir = path.join(args.exp_dir, f"{args.trial}_LinClr")
     logger = SummaryWriter(trial_dir)
     print(f"Tensorboard Logs kept at : {logger.log_dir}")
-
     print(vars(args))
 
     if args.seed is not None:
@@ -141,7 +139,7 @@ def main():
         args.world_size = ngpus_per_node * args.world_size
         # Use torch.multiprocessing.spawn to launch distributed processes: the
         # main_worker process function
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, logger),)
+        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, logger), )
     else:
         # Simply call main_worker function
         main_worker(args.gpu, ngpus_per_node, args, logger=logger)
@@ -155,6 +153,7 @@ def main_worker(gpu, ngpus_per_node, args, logger=None):
     if args.multiprocessing_distributed and args.gpu != 0:
         def print_pass(*args):
             pass
+
         builtins.print = print_pass
 
     if args.gpu is not None:
@@ -325,7 +324,7 @@ def main_worker(gpu, ngpus_per_node, args, logger=None):
         best_acc1 = max(acc1, best_acc1)
 
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
-                and args.rank % ngpus_per_node == 0):
+                                                    and args.rank % ngpus_per_node == 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': args.arch,
@@ -468,6 +467,7 @@ def sanity_check(state_dict, pretrained_weights):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self, name, fmt=':f'):
         self.name = name
         self.fmt = fmt

@@ -1,15 +1,16 @@
 import argparse
 import time
 import math
+import random
 from os import path, makedirs
 
 import torch
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torch.backends import cudnn
 from torchvision import datasets
 from torchvision import transforms
+import torch.backends.cudnn as cudnn
 
 from simsiam.loader import TwoCropsTransform
 from simsiam.model_factory import SimSiam
@@ -17,7 +18,7 @@ from simsiam.criterion import SimSiamLoss
 from simsiam.validation import KNNValidation
 
 parser = argparse.ArgumentParser('arguments for training')
-parser.add_argument('--data_root', type=str, default= 'data', help='path to dataset directory')
+parser.add_argument('--data_root', type=str, default='data', help='path to dataset directory')
 parser.add_argument('--exp_dir', type=str, default='experiments', help='path to experiment directory')
 parser.add_argument('--trial', type=str, default='1', help='trial id')
 parser.add_argument('--img_dim', default=32, type=int)
@@ -41,16 +42,31 @@ parser.add_argument('--resume', default=None, type=str, help='path to latest che
 parser.add_argument('--learning_rate', type=float, default=0.05, help='learning rate')
 parser.add_argument('--weight_decay', type=float, default=5e-4, help='weight decay')
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+parser.add_argument('--seed', default=123, type=int, metavar='N', help='random seed of numpy and torch')
 
 args = parser.parse_args()
 
 
 def main():
+    # adding seed
+    if args.seed is not None:
+        random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        cudnn.deterministic = True
+        warnings.warn(
+            'You have chosen to seed training. '
+            'This will turn on the CUDNN deterministic setting, '
+            'which can slow down your training considerably! '
+            'You may see unexpected behavior when restarting '
+            'from checkpoints.'
+        )
+
     if not path.exists(args.exp_dir):
         makedirs(args.exp_dir)
 
     trial_dir = path.join(args.exp_dir, args.trial)
     logger = SummaryWriter(trial_dir)
+    print(f"Tensorboard logs kept in {logger.log_dir}")
     print(vars(args))
 
     train_transforms = transforms.Compose([
@@ -100,11 +116,10 @@ def main():
         else:
             print("No checkpoint found at '{}'".format(args.resume))
 
-
     # routine
     best_acc = 0.0
     validation = KNNValidation(args, model.encoder)
-    for epoch in range(start_epoch, args.epochs+1):
+    for epoch in range(start_epoch, args.epochs + 1):
 
         adjust_learning_rate(optimizer, epoch, args)
         print("Training...")
@@ -135,8 +150,8 @@ def main():
 
     print('Best accuracy:', best_acc)
 
-    # save model
-    save_checkpoint(epoch, model, optimizer, val_top1_acc,
+    # save final model
+    save_checkpoint(epoch, model, optimizer, best_acc,
                     path.join(trial_dir, '{}_last.pth'.format(args.trial)),
                     'Saving the model at the last epoch.')
 
@@ -191,6 +206,7 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self, name, fmt=':f'):
         self.name = name
         self.fmt = fmt
