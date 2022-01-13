@@ -75,6 +75,7 @@ parser.add_argument('--dist-backend', default='nccl', type=str,
                     help='distributed backend')
 parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
+parser.add_argument('--trial', type=str, default='1', help='trial id')
 parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
 parser.add_argument('--multiprocessing-distributed', action='store_true',
@@ -101,6 +102,14 @@ best_acc1 = 0
 
 def main():
     args = parser.parse_args()
+
+    if not path.exists(args.exp_dir):
+        makedirs(args.exp_dir)
+
+    trial_dir = path.join(args.exp_dir, f"{args.trial}_LinClr")
+    logger = SummaryWriter(trial_dir)
+    print(f"Tensorboard Logs kept at : {logger.log_dir}")
+
     print(vars(args))
 
     if args.seed is not None:
@@ -303,9 +312,11 @@ def main_worker(gpu, ngpus_per_node, args):
 
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, args)
+        logger.add_scalar('FineTune_Loss/train', train_loss, epoch)
 
         # evaluate on validation set
         acc1 = validate(val_loader, model, criterion, args)
+        logger.add_scalar('FineTune_Acc/val_top1', acc1, epoch)
 
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
@@ -324,6 +335,7 @@ def main_worker(gpu, ngpus_per_node, args):
                 sanity_check(model.state_dict(), args.pretrained)
 
     print('Best acc:', best_acc1)
+    logger.close()
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):

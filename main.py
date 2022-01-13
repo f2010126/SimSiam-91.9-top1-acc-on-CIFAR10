@@ -100,6 +100,7 @@ def main():
         else:
             print("No checkpoint found at '{}'".format(args.resume))
 
+
     # routine
     best_acc = 0.0
     validation = KNNValidation(args, model.encoder)
@@ -256,6 +257,3 @@ def load_checkpoint(model, optimizer, filename):
 
 if __name__ == '__main__':
     main()
-
-
-
