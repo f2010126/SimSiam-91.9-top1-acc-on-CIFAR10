@@ -20,6 +20,6 @@ python3 -c "import torch; print(torch.cuda.is_available())"
 
 echo "Pretrain Simsiam with CIFAR10 LR =0.06"
 
-python3 -m main --seed 3 --arch resnet18 --learning_rate 0.06 --epochs 800 --weight_decay 5e-4 --momentum 0.9 --batch_size 512 --gpu 0 --trial $EXPERIMENT_NAME --exp_dir "/work/dlclarge2/wagnerd-metassl_experiments/CIFAR10"
+python3 -m main --seed 3 --arch resnet18 --learning_rate 0.06 --epochs 10 --weight_decay 5e-4 --momentum 0.9 --batch_size 512 --gpu 0 --trial $EXPERIMENT_NAME --exp_dir "/work/dlclarge2/wagnerd-metassl_experiments/CIFAR10"
 
 # deactivate

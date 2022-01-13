@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 ##SBATCH -o /work/dlclarge1/dsengupt-lth_ws/slurm_logs/800_1gpu_simsiam.out # STDOUT  (the folder log has to be created prior to running or this won't work)
 ##SBATCH -e /work/dlclarge1/dsengupt-lth_ws/slurm_logs/800_1gpu_simsiam.err # STDERR  (the folder log has to be created prior to running or this won't work)
-#SBATCH -J ERC_MSSL_Cifar10_SimSiam_FT
+#SBATCH -J ERC_MSSL_Cifar10_SimSiam
 #SBATCH -t 19:59:00
 #SBATCH --mail-type=BEGIN,END,FAIL
 
@@ -18,8 +18,10 @@ python3 -c "import torch; print(torch.cuda.is_available())"
 
 # cd MetaSSL/SimSiam-91.9-top1-acc-on-CIFAR10
 
-echo "FineTune Simsiam with CIFAR10 LR =0.06"
+echo "Pretrain Simsiam with CIFAR10 LR =0.06"
 
-python -m main_lincls --trial $EXPERIMENT_NAME --seed 123 --arch resnet18 --num_cls 10 --batch_size 256 --lr 30.0 --weight_decay 0.0 --pretrained /work/dlclarge2/wagnerd-metassl_experiments/CIFAR10/$EXPERIMENT_NAME/$EXPERIMENT_NAME
+python3 -m main --seed 3 --arch resnet18 --learning_rate 0.06 --epochs 10 --weight_decay 5e-4 --momentum 0.9 --batch_size 512 --gpu 0 --trial $EXPERIMENT_NAME --exp_dir "/work/dlclarge2/wagnerd-metassl_experiments/CIFAR10"
+
+python -m main_lincls --trial $EXPERIMENT_NAME --seed 123 --arch resnet18 --num_cls 10 --batch_size 256 --lr 30.0 --weight_decay 0.0 --run_both "both_best" --pretrained /work/dlclarge2/wagnerd-metassl_experiments/CIFAR10/$EXPERIMENT_NAME/$EXPERIMENT_NAME "./data"
 
 # deactivate
