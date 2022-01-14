@@ -22,6 +22,6 @@ python3 -c "import torch; print(torch.cuda.is_available())"
 
 echo "Pretrain Simsiam with CIFAR10 LR =0.06"
 
-python3 -m both --gpu 0 --is_bohb_run --valid_size 0.1 --seed 1 --trial $EXPERIMENT_NAME --exp_dir "/work/dlclarge2/wagnerd-metassl_experiments/BOHB/CIFAR10" --pretrained /work/dlclarge2/wagnerd-metassl_experiments/BOHB/CIFAR10/$EXPERIMENT_NAME/$EXPERIMENT_NAME --n_iterations 250 --run_id "color-jitter_lr006" --pt_learning_rate 0.06 --shutdown_workers --worker
+python3 -m both --gpu 0 --is_bohb_run --valid_size 0.1 --seed 1 --trial $EXPERIMENT_NAME --exp_dir "/work/dlclarge2/wagnerd-metassl_experiments/BOHB/CIFAR10" --pretrained /work/dlclarge2/wagnerd-metassl_experiments/BOHB/CIFAR10/$EXPERIMENT_NAME/$EXPERIMENT_NAME --n_iterations 250 --run_id "double-color-jitter_lr006" --configspace_mode 'double_color_jitter_strengths' --pt_learning_rate 0.06 --shutdown_workers --worker
 
 # deactivate
