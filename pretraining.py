@@ -90,10 +90,10 @@ def main(args, trial_dir=None, bohb_infos=None):
         p_colorjitter = 0.8
         p_grayscale = 0.2
         # p_gaussianblur = 0.5 if dataset_name == 'ImageNet' else 0
-        brightness_strength = 1.1592547258007664
-        contrast_strength = 1.160211615089221
-        saturation_strength = 0.9843846879329252
-        hue_strength = 0.19030216963226004
+        brightness_strength = args.brightness_strength
+        contrast_strength = args.contrast_strength
+        saturation_strength = args.saturation_strength
+        hue_strength = args.hue_strength
 
     # BOHB - probability augment configspace
     if bohb_infos is not None and bohb_infos['bohb_configspace'].endswith('probability_simsiam_augment'):
