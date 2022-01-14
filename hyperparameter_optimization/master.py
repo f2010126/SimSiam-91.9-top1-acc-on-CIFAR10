@@ -12,7 +12,7 @@ import numpy as np
 
 from hpbandster.optimizers import BOHB as BOHB
 
-from hyperparameter_optimization.configspaces import get_cifar10_probability_simsiam_augment_configspace, get_color_jitter_strengths_configspace, get_rand_augment_configspace, get_probability_augment_configspace, get_double_probability_augment_configspace
+from hyperparameter_optimization.configspaces import get_cifar10_probability_simsiam_augment_configspace, get_color_jitter_strengths_configspace, get_double_color_jitter_strengths_configspace, get_rand_augment_configspace, get_probability_augment_configspace, get_double_probability_augment_configspace
 from hyperparameter_optimization.worker import HPOWorker
 from hyperparameter_optimization.dispatcher import add_shutdown_worker_to_register_result
 
@@ -77,6 +77,8 @@ def run_master(args, trial_dir):
         configspace = get_cifar10_probability_simsiam_augment_configspace()
     elif args.configspace_mode == "color_jitter_strengths":
         configspace = get_color_jitter_strengths_configspace()
+    elif args.configspace_mode == "double_color_jitter_strengths":
+        configspace = get_double_color_jitter_strengths_configspace()
     elif args.configspace_mode == "rand_augment":
         configspace = get_rand_augment_configspace()
     elif args.configspace_mode == "probability_augment":

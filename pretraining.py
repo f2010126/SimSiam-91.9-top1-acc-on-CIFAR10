@@ -102,13 +102,17 @@ def main(args, trial_dir=None, bohb_infos=None):
         # p_gaussianblur = bohb_infos['bohb_config']['p_gaussianblur'] if dataset_name == 'ImageNet' else 0
 
     # BOHB - color jitter strengths configspace
-    if bohb_infos is not None and bohb_infos['bohb_configspace'] == 'color_jitter_strengths':
+    elif bohb_infos is not None and bohb_infos['bohb_configspace'].endswith('color_jitter_strengths'):
         brightness_strength = bohb_infos['bohb_config']['brightness_strength']
         contrast_strength = bohb_infos['bohb_config']['contrast_strength']
         saturation_strength = bohb_infos['bohb_config']['saturation_strength']
         hue_strength = bohb_infos['bohb_config']['hue_strength']
 
+    elif bohb_infos is not None:
+        raise NotImplementedError
+
     # For testing
+    print(f"\nPRETRAINING PARAMS")
     print(f"{p_colorjitter=}")
     print(f"{p_grayscale=}")
     # print(f"{p_gaussianblur=}")
