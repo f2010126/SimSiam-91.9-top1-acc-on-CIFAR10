@@ -30,6 +30,36 @@ def get_color_jitter_strengths_configspace():
     return cs
 
 
+def get_double_color_jitter_strengths_configspace():
+    cs = CS.ConfigurationSpace()
+    brightness_strength = CSH.UniformFloatHyperparameter(
+        "brightness_strength", lower=0, upper=1.2, log=False, default_value=0.4,
+    )
+    contrast_strength = CSH.UniformFloatHyperparameter(
+        "contrast_strength", lower=0, upper=1.2, log=False, default_value=0.4,
+    )
+    saturation_strength = CSH.UniformFloatHyperparameter(
+        "saturation_strength", lower=0, upper=1.2, log=False, default_value=0.4,
+    )
+    hue_strength = CSH.UniformFloatHyperparameter(
+        "hue_strength", lower=0, upper=0.4, log=False, default_value=0.1,
+    )
+    ft_brightness_strength = CSH.UniformFloatHyperparameter(
+        "ft_brightness_strength", lower=0, upper=1.2, log=False, default_value=0.4,
+    )
+    ft_contrast_strength = CSH.UniformFloatHyperparameter(
+        "ft_contrast_strength", lower=0, upper=1.2, log=False, default_value=0.4,
+    )
+    ft_saturation_strength = CSH.UniformFloatHyperparameter(
+        "ft_saturation_strength", lower=0, upper=1.2, log=False, default_value=0.4,
+    )
+    ft_hue_strength = CSH.UniformFloatHyperparameter(
+        "ft_hue_strength", lower=0, upper=0.4, log=False, default_value=0.1,
+    )
+    cs.add_hyperparameters([brightness_strength, contrast_strength, saturation_strength, hue_strength, ft_brightness_strength, ft_contrast_strength, ft_saturation_strength, ft_hue_strength])
+    return cs
+
+
 def get_rand_augment_configspace():
     cs = CS.ConfigurationSpace()
     num_ops = CSH.UniformIntegerHyperparameter(
