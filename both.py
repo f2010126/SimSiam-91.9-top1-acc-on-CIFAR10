@@ -70,6 +70,10 @@ if __name__ == '__main__':
     parser.add_argument("--run_background_worker", action='store_true',help='If using this flag, the master runs a worker in the background.')
     parser.add_argument("--valid_size", default=0.0, type=float, help='If valid_size > 0, pick some images from the trainset to do evaluation on. If valid_size=0 evaluation is done on the testset.')
     parser.add_argument('--use_fix_aug_params', action='store_true', help='Use this flag if you want to try out specific aug params (e.g., from a best BOHB config). Default values will be overwritten then without crashing other experiments.')
+    parser.add_argument('--brightness_strength', default=0.4, type=float, help='Brightness strength parameterized')
+    parser.add_argument('--contrast_strength', default=0.4, type=float, help='Contrast strength parameterized')
+    parser.add_argument('--saturation_strength', default=0.4, type=float, help='Saturation strength parameterized')
+    parser.add_argument('--hue_strength', default=0.1, type=float, help='Hue strength parameterized')
     args = parser.parse_args()
 
     if args.is_bohb_run:
