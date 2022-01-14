@@ -71,6 +71,16 @@ def main(args, trial_dir=None, bohb_infos=None):
                       'You may see unexpected behavior when restarting '
                       'from checkpoints.')
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # Specify pretraining learning rate
+    # ------------------------------------------------------------------------------------------------------------------
+    if bohb_infos is not None and bohb_infos['bohb_configspace'] == 'lr_color_jitter_strengths':
+        args.ft_learning_rate = bohb_infos['bohb_config']['ft_learning_rate']
+
+    # For testing pt_learning_rate
+    print(f"{args.ft_learning_rate=}")
+    # ------------------------------------------------------------------------------------------------------------------
+
     if args.gpu is not None:
         warnings.warn('You have chosen a specific GPU. This will completely '
                       'disable data parallelism.')
