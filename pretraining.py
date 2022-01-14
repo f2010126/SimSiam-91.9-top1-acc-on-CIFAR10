@@ -111,7 +111,14 @@ def main(args, trial_dir=None, bohb_infos=None):
     elif bohb_infos is not None:
         raise NotImplementedError
 
-    # For testing
+    # ------------------------------------------------------------------------------------------------------------------
+    # Specify pretraining learning rate
+    # ------------------------------------------------------------------------------------------------------------------
+    if bohb_infos is not None and bohb_infos['bohb_configspace'] == 'lr_color_jitter_strengths':
+        args.pt_learning_rate = bohb_infos['bohb_config']['pt_learning_rate']
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # For testing augs
     print(f"\nPRETRAINING PARAMS")
     print(f"{p_colorjitter=}")
     print(f"{p_grayscale=}")
@@ -120,6 +127,9 @@ def main(args, trial_dir=None, bohb_infos=None):
     print(f"{contrast_strength=}")
     print(f"{saturation_strength=}")
     print(f"{hue_strength=}")
+
+    # For testing pt_learning_rate
+    print(f"{args.pt_learning_rate=}")
     # ------------------------------------------------------------------------------------------------------------------
     train_transforms = transforms.Compose([
         transforms.RandomResizedCrop(args.img_dim, scale=(0.2, 1.)),
