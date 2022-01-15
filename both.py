@@ -74,12 +74,20 @@ if __name__ == '__main__':
     parser.add_argument('--contrast_strength', default=0.4, type=float, help='Contrast strength parameterized')
     parser.add_argument('--saturation_strength', default=0.4, type=float, help='Saturation strength parameterized')
     parser.add_argument('--hue_strength', default=0.1, type=float, help='Hue strength parameterized')
+    parser.add_argument('--is_trivialaugment', action='store_true', help='Set this flag augment pretraining data with trivialaugment')
+    parser.add_argument('--is_smartsamplingaugment', action='store_true', help='Set this flag augment pretraining data with smartsamplingaugment')
     args = parser.parse_args()
+
+    # Error check
+    if np.isclose(args.valid_size, 0.0) and args.is_bohb_run:
+        raise ValueError("--valid_size needs to be > 0 for BOHB runs!")
+    if args.is_trivialaugment and args.is_smartsamplingaugment:
+        raise ValueError("--trivialaugment and --smartsamplingaugment can't be enabled both at the same time!")
+    if args.is_bohb_run and (args.is_trivialaugment or args.is_smartsamplingaugment):
+        raise ValueError("--is_bohb_run can't be enabled together with --trivialaugment or --smartsamplingaugment at the same time!")
 
     if args.is_bohb_run:
         from hyperparameter_optimization.master import start_bohb_master
-        if np.isclose(args.valid_size, 0.0) and args.is_bohb_run:
-            raise ValueError("--valid_size needs to be > 0 for BOHB runs!")
         start_bohb_master(args)
     else:
         print("\n\n\nPretraining...\n\n\n")
