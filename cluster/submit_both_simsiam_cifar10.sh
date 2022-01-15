@@ -20,6 +20,6 @@ python3 -c "import torch; print(torch.cuda.is_available())"
 
 # echo "Pretrain Simsiam with CIFAR10 LR =0.06"
 
-python3 -m both --gpu 0 --valid_size 0.0 --seed 3 --pt_learning_rate 0.06 --trial $EXPERIMENT_NAME --exp_dir "/work/dlclarge2/wagnerd-metassl_experiments/CIFAR10" --pretrained /work/dlclarge2/wagnerd-metassl_experiments/CIFAR10/$EXPERIMENT_NAME/$EXPERIMENT_NAME --use_fix_aug_params --brightness_strength 0.35794289444482313 --contrast_strength 0.7202303161903096 --saturation_strength 0.6674916977571251 --hue_strength 0.1946554434470047 
+python3 -m both --gpu 0 --valid_size 0.0 --seed 3 --pt_learning_rate 0.06 --trial $EXPERIMENT_NAME --exp_dir "/work/dlclarge2/wagnerd-metassl_experiments/CIFAR10" --pretrained /work/dlclarge2/wagnerd-metassl_experiments/CIFAR10/$EXPERIMENT_NAME/$EXPERIMENT_NAME --use_fix_aug_params --brightness_strength 0.6015574202968046 --contrast_strength 0.2124045017495769 --saturation_strength 0.01913669419221211 --hue_strength 0.1728040177520761 
 
 # deactivate
