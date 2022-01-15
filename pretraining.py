@@ -148,7 +148,15 @@ def main(args, trial_dir=None, bohb_infos=None):
         train_set = Cifar10AugmentPT(root=args.data_root,
                                      train=True,
                                      download=True,
-                                     transform=None)
+                                     transform=None,
+                                     augmentation_mode="trivialaugment")
+    elif args.is_smartsamplingaugment:
+        print("\n\n\n SMARTSAMPLING AUGMENT \n\n\n")
+        train_set = Cifar10AugmentPT(root=args.data_root,
+                                     train=True,
+                                     download=True,
+                                     transform=None,
+                                     augmentation_mode="smartsamplingaugment")
     else:
         train_set = datasets.CIFAR10(root=args.data_root,
                                  train=True,
@@ -243,7 +251,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     end = time.time()
     for i, (images, _) in enumerate(train_loader):
 
-        if args.is_trivialaugment:
+        if args.is_trivialaugment or args.is_smartsamplingaugment:
         # To prevent the following error:
         # RuntimeError: Input type (torch.cuda.DoubleTensor) and weight type (torch.cuda.FloatTensor) should be the same
             images[0] = images[0].float()
