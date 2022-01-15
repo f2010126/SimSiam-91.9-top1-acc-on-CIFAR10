@@ -69,11 +69,16 @@ if __name__ == '__main__':
     parser.add_argument("--shutdown_workers", action='store_true', help='If using this flag, workers are not being shutdown after registering results.')
     parser.add_argument("--run_background_worker", action='store_true',help='If using this flag, the master runs a worker in the background.')
     parser.add_argument("--valid_size", default=0.0, type=float, help='If valid_size > 0, pick some images from the trainset to do evaluation on. If valid_size=0 evaluation is done on the testset.')
-    parser.add_argument('--use_fix_aug_params', action='store_true', help='Use this flag if you want to try out specific aug params (e.g., from a best BOHB config). Default values will be overwritten then without crashing other experiments.')
+    parser.add_argument('--use_fix_aug_params', action='store_true', help='Use this flag if you want to try out specific aug params for pretraining(e.g., from a best BOHB config). Default values will be overwritten then without crashing other experiments.')
+    parser.add_argument('--use_fix_aug_params_ft', action='store_true', help='Use this flag if you want to try out specific aug params for finetuning(e.g., from a best BOHB config). Default values will be overwritten then without crashing other experiments.')
     parser.add_argument('--brightness_strength', default=0.4, type=float, help='Brightness strength parameterized')
     parser.add_argument('--contrast_strength', default=0.4, type=float, help='Contrast strength parameterized')
     parser.add_argument('--saturation_strength', default=0.4, type=float, help='Saturation strength parameterized')
     parser.add_argument('--hue_strength', default=0.1, type=float, help='Hue strength parameterized')
+    parser.add_argument('--ft_brightness_strength', default=0.4, type=float, help='Brightness strength parameterized')
+    parser.add_argument('--ft_contrast_strength', default=0.4, type=float, help='Contrast strength parameterized')
+    parser.add_argument('--ft_saturation_strength', default=0.4, type=float, help='Saturation strength parameterized')
+    parser.add_argument('--ft_hue_strength', default=0.1, type=float, help='Hue strength parameterized')
     parser.add_argument('--is_trivialaugment', action='store_true', help='Set this flag augment pretraining data with trivialaugment')
     parser.add_argument('--is_smartsamplingaugment', action='store_true', help='Set this flag augment pretraining data with smartsamplingaugment')
     args = parser.parse_args()
@@ -85,6 +90,8 @@ if __name__ == '__main__':
         raise ValueError("--trivialaugment and --smartsamplingaugment can't be enabled both at the same time!")
     if args.is_bohb_run and (args.is_trivialaugment or args.is_smartsamplingaugment):
         raise ValueError("--is_bohb_run can't be enabled together with --trivialaugment or --smartsamplingaugment at the same time!")
+    if args.use_fix_aug_params_ft and not args.use_fix_aug_params:
+        raise ValueError("If --use_fix_aug_params_ft is set, --use_fix_aug_params should also be set!")
 
     if args.is_bohb_run:
         from hyperparameter_optimization.master import start_bohb_master
