@@ -14,6 +14,7 @@ from torchvision import datasets
 from torchvision import transforms
 import torch.backends.cudnn as cudnn
 
+from simsiam.augment_datasets import Cifar10AugmentPT
 from simsiam.get_sampler import get_train_valid_sampler
 from simsiam.loader import TwoCropsTransform
 from simsiam.model_factory import SimSiam
@@ -142,7 +143,14 @@ def main(args, trial_dir=None, bohb_infos=None):
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
 
-    train_set = datasets.CIFAR10(root=args.data_root,
+    if args.is_trivialaugment:
+        print("\n\n\n TRIVIAL AUGMENT \n\n\n")
+        train_set = Cifar10AugmentPT(root=args.data_root,
+                                     train=True,
+                                     download=True,
+                                     transform=None)
+    else:
+        train_set = datasets.CIFAR10(root=args.data_root,
                                  train=True,
                                  download=True,
                                  transform=TwoCropsTransform(train_transforms))
@@ -234,6 +242,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     end = time.time()
     for i, (images, _) in enumerate(train_loader):
+
+        if args.is_trivialaugment:
+        # To prevent the following error:
+        # RuntimeError: Input type (torch.cuda.DoubleTensor) and weight type (torch.cuda.FloatTensor) should be the same
+            images[0] = images[0].float()
+            images[1] = images[0].float()
 
         if args.gpu is not None:
             images[0] = images[0].cuda(args.gpu, non_blocking=True)
