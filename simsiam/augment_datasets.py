@@ -6,13 +6,15 @@ import torchvision
 
 from PIL import Image
 
-from simsiam.augment import TrivialAugment
+from simsiam.augment import TrivialAugment, SmartSamplingAugment
 
 
 class Cifar10AugmentPT(torchvision.datasets.CIFAR10):
-    def __init__(self, root="~/data/cifar10", train=True, download=True, transform=None):
+    def __init__(self, root="~/data/cifar10", train=True, download=True, transform=None, augmentation_mode=None):
         super().__init__(root=root, train=train, download=download, transform=transform)
         self.trivialaugment = TrivialAugment()
+        self.smartsamplingaugment = SmartSamplingAugment(max_epochs=800, current_epoch=800)
+        self.augmentation_mode = augmentation_mode
 
     def __getitem__(self, index):
         image, label = self.data[index], self.targets[index]
@@ -28,8 +30,14 @@ class Cifar10AugmentPT(torchvision.datasets.CIFAR10):
             image = Image.fromarray(image)
 
             # Data Augmentation
-            image_a = self.trivialaugment(image)
-            image_b = self.trivialaugment(image)
+            if self.augmentation_mode == "trivialaugment":
+                image_a = self.trivialaugment(image)
+                image_b = self.trivialaugment(image)
+            elif self.augmentation_mode == "smartsamplingaugment":
+                image_a = self.smartsamplingaugment(image)
+                image_b = self.smartsamplingaugment(image)
+            else:
+                raise NotImplementedError
 
             # PIL > NP
             image_a = np.asarray(image_a, dtype='float64')
