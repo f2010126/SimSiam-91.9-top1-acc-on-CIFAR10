@@ -266,6 +266,40 @@ def main_worker(gpu, ngpus_per_node, args, logger=None, trial_dir=None, bohb_inf
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         ])
+    elif args.use_fix_aug_params_ft:
+        print("FT - FIX AUG PARAMS")
+        # Defaults
+        p_colorjitter = 0.8
+        p_grayscale = 0.2
+        # p_gaussianblur = 0.5 if dataset_name == 'ImageNet' else 0
+        brightness_strength = args.ft_brightness_strength
+        contrast_strength = args.ft_contrast_strength
+        saturation_strength = args.ft_saturation_strength
+        hue_strength = args.ft_hue_strength
+
+        # For testing
+        print(f"\nFINETUNING PARAMS")
+        print(f"{p_colorjitter=}")
+        print(f"{p_grayscale=}")
+        # print(f"{p_gaussianblur=}")
+        print(f"{brightness_strength=}")
+        print(f"{contrast_strength=}")
+        print(f"{saturation_strength=}")
+        print(f"{hue_strength=}")
+
+        transform_train = transforms.Compose([
+            transforms.RandomResizedCrop(32, scale=(0.8, 1.0),
+                                         ratio=(3.0 / 4.0, 4.0 / 3.0),
+                                         interpolation=Image.BICUBIC),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomApply([
+                transforms.ColorJitter(brightness=brightness_strength, contrast=contrast_strength,
+                                       saturation=saturation_strength, hue=hue_strength)  # not strengthened
+            ], p=p_colorjitter),
+            transforms.RandomGrayscale(p=p_grayscale),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
     else:
         transform_train = transforms.Compose([
             transforms.RandomResizedCrop(32, scale=(0.8, 1.0),
